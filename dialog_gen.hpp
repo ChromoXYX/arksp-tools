@@ -17,7 +17,7 @@ extern "C" {
 	{ \
 	FT_Error ec=_Statement; \
 	if(ec!=0){ \
-		throw std::string("Error: Freetype failed, error code "+std::to_string(ec)); \
+		throw std::string("Error: Line "+std::to_string(__LINE__)+" freetype failed\nerror code "+std::to_string(ec)); \
 	}\
 	}
 
@@ -36,14 +36,14 @@ namespace arksp {
 			FT_UInt pixel_height = 16,
 			FT_UInt pixel_width = 0,
 			FT_Long face_index = 0,
-			int y_offset = 20,
-			int line_spacing = 20,
-			int x_offset = 0) {
+			unsigned int y_offset = 20,
+			unsigned int line_spacing = 20,
+			unsigned int x_offset = 0) {
 
 			m_mat.clear(); m_mat.shrink_to_fit();
-			m_mat.push_back(cv::Mat(rows, cols, CV_8UC3, cv::Scalar(0, 0, 0)));
+			m_mat.push_back(std::make_shared<cv::Mat>(cv::Mat(rows, cols, CV_8UC3, cv::Scalar(0, 0, 0))));
 			auto tstr = str;
-			int x = x_offset, y = y_offset, line_width = 0;
+			unsigned int x = x_offset, y = y_offset, line_width = 0;
 			m_interval = interval;
 
 			FT_Library lib;
@@ -67,11 +67,11 @@ namespace arksp {
 					continue;
 				}
 
-				cv::Mat temp = (*(m_mat.end() - 1)).clone();
+				cv::Mat temp = (*(m_mat.end() - 1))->clone();
 				for (int j = 0; j < face_rows; ++j) {
 					for (int m = 0; m < face_cols; ++m) {
-						int _y = y - face->glyph->bitmap_top + j;
-						int _x = face->glyph->bitmap_left + x + m;
+						unsigned int _y = y - face->glyph->bitmap_top + j;
+						unsigned int _x = face->glyph->bitmap_left + x + m;
 						if (_y >= rows || _x >= cols ||
 							_y < 0 || _x < 0) {
 							continue;
@@ -83,13 +83,16 @@ namespace arksp {
 						};
 					}
 				}
-				for (int i = 1; i < interval; ++i) {
-					m_mat.push_back(temp);
+				m_mat.push_back(std::make_shared<cv::Mat>(temp));
+				for (unsigned int i = 1; i < interval - 1; ++i) {
+					m_mat.push_back(*(m_mat.end() - 1));
 				}
 				x += face->glyph->advance.x >> 6;
 
 				onProgress(_index);
 			}
+
+			ARKSP_FT(FT_Done_Face(face));
 		}
 
 		static std::shared_ptr<DialogGen> create(
@@ -102,10 +105,10 @@ namespace arksp {
 			FT_UInt pixel_height = 16,
 			FT_UInt pixel_width = 0,
 			FT_Long face_index = 0,
-			int y_offset = 20,
-			int line_spacing = 20,
-			int x_offset = 0) {
-			std::shared_ptr<DialogGen> p(new DialogGen);
+			unsigned int y_offset = 20,
+			unsigned int line_spacing = 20,
+			unsigned int x_offset = 0) {
+			auto p = std::make_shared<DialogGen>();
 			p->gen(str, interval, rows, cols, font_path, onProgress, pixel_height, pixel_width, face_index, y_offset, line_spacing, x_offset);
 			return p;
 		}
@@ -122,7 +125,7 @@ namespace arksp {
 
 	private:		
 		DialogGen(const DialogGen& _) {}
-		std::vector<cv::Mat> m_mat;
+		std::vector<std::shared_ptr<cv::Mat>> m_mat;
 		unsigned int m_interval = 0;
 	};
 }
