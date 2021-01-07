@@ -57,8 +57,8 @@ namespace arksp {
 				++_index;
 				ARKSP_FT(FT_Load_Char(face, tstr.c_str()[i], FT_LOAD_RENDER));
 
-				int face_rows = face->glyph->bitmap.rows;
-				int face_cols = face->glyph->bitmap.width;
+				unsigned int face_rows = face->glyph->bitmap.rows;
+				unsigned int face_cols = face->glyph->bitmap.width;
 				line_width += face->glyph->advance.x >> 6;
 				if (line_width > cols - x_offset) {
 					line_width = 0; x = x_offset; y += line_spacing;
@@ -68,8 +68,8 @@ namespace arksp {
 				}
 
 				cv::Mat temp = (*(m_mat.end() - 1))->clone();
-				for (int j = 0; j < face_rows; ++j) {
-					for (int m = 0; m < face_cols; ++m) {
+				for (unsigned int j = 0; j < face_rows; ++j) {
+					for (unsigned int m = 0; m < face_cols; ++m) {
 						unsigned int _y = y - face->glyph->bitmap_top + j;
 						unsigned int _x = face->glyph->bitmap_left + x + m;
 						if (_y >= rows || _x >= cols ||
@@ -122,8 +122,11 @@ namespace arksp {
 		auto size() {
 			return m_mat.size();
 		}
+		auto get() {
+			return m_mat;
+		}
 
-	private:		
+	private:
 		DialogGen(const DialogGen& _) {}
 		std::vector<std::shared_ptr<cv::Mat>> m_mat;
 		unsigned int m_interval = 0;
